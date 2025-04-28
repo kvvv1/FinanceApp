@@ -1,0 +1,11 @@
+{
+  "sender": "Nubank",
+  "text": "Voc\u00ea recebeu um PIX de R$ 350,00 de Maria Souza",
+  "timestamp": "2025-04-28 11:52:28",
+  "device_id": "DEVICE-bd0bd710",
+  "processing_result": {
+    "success": false,
+    "error": "Erro ao registrar transa\u00e7\u00e3o: NOT NULL constraint failed: bank_accounts.account_type"
+  },
+  "processed_at": "2025-04-28 11:54:56"
+}

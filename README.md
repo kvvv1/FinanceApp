@@ -1,3 +1,5 @@
+# FinanceApp - Sistema de Gerenciamento Financeiro
+
 ### Step 1: Set Up the Project Structure
 
 1. **Create the Project Directory:**

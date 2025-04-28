@@ -9,17 +9,39 @@ function Transactions() {
     description: '',
     amount: '',
     type: 'expense',
-    category: '1'  // valor padrão para categoria
+    category: ''  // valor padrão vazio, será preenchido com a primeira categoria disponível
   });
   const [categories, setCategories] = useState([]);
   const [refreshKey, setRefreshKey] = useState(0);
 
   // Buscar categorias
   useEffect(() => {
-    fetch('/api/categories')
-      .then(response => response.json())
-      .then(data => setCategories(data))
-      .catch(err => console.error('Erro ao buscar categorias:', err));
+    fetch('/api/categorias')
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Erro ao buscar categorias');
+        }
+        return response.json();
+      })
+      .then(data => {
+        console.log('Categorias carregadas:', data);
+        setCategories(data);
+        
+        // Define a categoria padrão baseada na primeira categoria disponível
+        if (data.length > 0) {
+          const expenseCategories = data.filter(cat => cat.type === 'expense');
+          if (expenseCategories.length > 0) {
+            setFormData(prev => ({
+              ...prev,
+              category: expenseCategories[0].name
+            }));
+          }
+        }
+      })
+      .catch(err => {
+        console.error('Erro ao buscar categorias:', err);
+        setError('Não foi possível carregar as categorias. Por favor, tente novamente.');
+      });
   }, []);
 
   // Buscar transações
@@ -33,6 +55,7 @@ function Transactions() {
         return response.json();
       })
       .then(data => {
+        console.log('Transações carregadas:', data);
         setTransactions(data);
         setLoading(false);
       })
@@ -50,6 +73,21 @@ function Transactions() {
     });
   };
 
+  const handleTypeChange = (e) => {
+    const newType = e.target.value;
+    setFormData(prev => {
+      // Quando mudar o tipo, atualize para a primeira categoria desse tipo
+      const filteredCategories = categories.filter(cat => cat.type === newType);
+      const defaultCategory = filteredCategories.length > 0 ? filteredCategories[0].name : '';
+      
+      return {
+        ...prev,
+        type: newType,
+        category: defaultCategory
+      };
+    });
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     
@@ -58,6 +96,8 @@ function Transactions() {
       ...formData,
       amount: parseFloat(formData.amount)
     };
+
+    console.log('Enviando transação:', transactionData);
 
     fetch('/api/transactions', {
       method: 'POST',
@@ -72,19 +112,21 @@ function Transactions() {
         }
         return response.json();
       })
-      .then(() => {
+      .then((data) => {
+        console.log('Resposta ao adicionar transação:', data);
         // Limpar formulário e atualizar lista
         setFormData({
           date: new Date().toISOString().split('T')[0],
           description: '',
           amount: '',
           type: 'expense',
-          category: '1'
+          category: categories.filter(cat => cat.type === 'expense')[0]?.name || ''
         });
         // Forçar atualização da lista
         setRefreshKey(oldKey => oldKey + 1);
       })
       .catch(error => {
+        console.error('Erro na submissão da transação:', error);
         setError(error.toString());
       });
   };
@@ -95,10 +137,12 @@ function Transactions() {
     return date.toLocaleDateString('pt-BR');
   };
 
-  // Função para obter o nome da categoria pelo ID
-  const getCategoryName = (categoryId) => {
-    const category = categories.find(c => c.id === categoryId);
-    return category ? category.name : 'Sem categoria';
+  // Formatar valor como moeda
+  const formatCurrency = (value) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(value);
   };
 
   return (
@@ -155,7 +199,7 @@ function Transactions() {
             <select
               name="type"
               value={formData.type}
-              onChange={handleInputChange}
+              onChange={handleTypeChange}
               className="form-control"
               required
             >
@@ -173,16 +217,17 @@ function Transactions() {
               className="form-control"
               required
             >
-              {categories
-                .filter(cat => 
-                  formData.type === 'expense' ? cat.type === 'expense' : cat.type === 'income'
-                )
-                .map(category => (
-                  <option key={category.id} value={category.id}>
-                    {category.name}
-                  </option>
-                ))
-              }
+              {categories.length === 0 ? (
+                <option value="">Carregando categorias...</option>
+              ) : (
+                categories
+                  .filter(cat => cat.type === formData.type)
+                  .map(category => (
+                    <option key={category.id} value={category.name}>
+                      {category.name}
+                    </option>
+                  ))
+              )}
             </select>
           </div>
           
@@ -216,8 +261,8 @@ function Transactions() {
                   <tr key={transaction.id} className={transaction.type === 'expense' ? 'expense-row' : 'income-row'}>
                     <td>{formatDate(transaction.date)}</td>
                     <td>{transaction.description}</td>
-                    <td>{getCategoryName(transaction.category_id)}</td>
-                    <td>R$ {transaction.amount.toFixed(2)}</td>
+                    <td>{transaction.category || 'Não categorizado'}</td>
+                    <td>{formatCurrency(transaction.amount)}</td>
                     <td>{transaction.type === 'expense' ? 'Despesa' : 'Receita'}</td>
                   </tr>
                 ))}

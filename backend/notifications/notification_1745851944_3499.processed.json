@@ -1,0 +1,11 @@
+{
+  "sender": "Itau",
+  "text": "Compra aprovada no cart\u00e3o final 1234 no valor de R$ 120,50 em Supermercado Extra em 28/04/2025",
+  "timestamp": "2025-04-28 11:52:24",
+  "device_id": "DEVICE-edc23440",
+  "processing_result": {
+    "success": false,
+    "error": "Erro ao registrar transa\u00e7\u00e3o: NOT NULL constraint failed: bank_accounts.account_type"
+  },
+  "processed_at": "2025-04-28 11:54:56"
+}
