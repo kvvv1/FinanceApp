@@ -1,0 +1,2 @@
+mkdir finance_management_system
+cd finance_management_system

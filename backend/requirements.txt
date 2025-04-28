@@ -1,0 +1,10 @@
+mkdir finance_management_system
+cd finance_management_system
+flask
+flask-cors
+sqlite3
+scikit-learn
+pandas
+numpy
+matplotlib
+joblib
